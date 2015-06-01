@@ -2,3 +2,15 @@
 	font-family: monospace;
 	white-space: pre;
 }
+
+.character {
+	width: 20em;
+	display: inline-block;
+	padding: 1em;
+	border: 0 solid lightblue;
+	border-top-width: 3px
+}
+
+.character.off {
+	border-color: red;
+}

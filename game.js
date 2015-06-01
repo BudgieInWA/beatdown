@@ -9,8 +9,8 @@ var createElement = require('virtual-dom/create-element');
 function Character(name) {
 	this.name = name;
 	this.hp = 10;
-	this.stance = 'horizontal';
 	this.currentAction = null;
+	this.offenseNext = false;
 }
 Character.prototype.toString = function() {
 	return "[Character " + this.name + "]";
@@ -46,7 +46,7 @@ Action.prototype.toString = function() {
  * Responsible for examining the target and deciding if damage should be dealt.
  */
 function Attack(owner, target) {
-	Action.call(this, 'jab', owner);
+	Action.call(this, 'attack', owner);
 	this.isAttack = true;
 	this.target = target;
 	this.power = 1;
@@ -85,7 +85,7 @@ Block.prototype = new Action(null);
 
 var players, currentPlayer;
 
-/// Carry out the next players turn.
+/// Carry out the next padding turn.
 function turn() {
 	var action = players[currentPlayer].currentAction;
 	if (action) {
@@ -95,8 +95,11 @@ function turn() {
 		}
 	}
 
+	players[currentPlayer].offenseNext = false;
+
 	++currentPlayer;
 	currentPlayer %= players.length;
+	players[currentPlayer].offenseNext = true;
 }
 
 /// Players wants to attack.
@@ -133,8 +136,11 @@ document.body.onkeydown = function(ev) {
 // D: Initialise the game state and game loop
 var p1 = new Character("Alice");
 var p2 = new Character("Bob");
+p1.dir = 'right';
+p2.dir = 'left';
 players = [p1, p2];
 currentPlayer = 0;
+p1.offenseNext = true;
 
 
 // 1: Create a function that declares what the DOM should look like
@@ -146,7 +152,19 @@ function renderAll()  {
 }
 
 function renderCharacter(character) {
-	return renderDebug(character);
+	var stance = 'stand';
+	if (character.currentAction) {
+		stance = character.currentAction.name;
+	}
+
+	return h('div.character.' + (character.offenseNext ? 'off' : 'def'),
+			{style: {'text-align': character.dir}}, 
+			[
+		h('img', {src: 'sprites/mouse-' + character.dir + '-' + stance + '.png'}),
+		h('br'),
+		stance,
+		renderDebug(character),
+	]) ;
 }
 
 function renderDebug(e) {
