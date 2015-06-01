@@ -5,11 +5,18 @@ var diff = require('virtual-dom/diff');
 var patch = require('virtual-dom/patch');
 var createElement = require('virtual-dom/create-element');
 
+// 0: Tweakables
+
+var turnTime = 2000;
+var postTurnTime = 400;
+
+
 // A: Data types and automatic behaviours
 function Character(name) {
 	this.name = name;
 	this.hp = 10;
 	this.currentAction = null;
+	this.animation = null;
 	this.offenseNext = false;
 }
 Character.prototype.toString = function() {
@@ -63,7 +70,10 @@ Attack.prototype.resolveOffense = function() {
 
 	if (!blocked) {
 		this.target.dealDamage('physical', this.power);
+		this.target.animation = 'damage';
 	}
+
+	this.owner.animation = 'swing';
 
 	this.owner.currentAction = null; // done with this action
 }
@@ -85,7 +95,7 @@ Block.prototype = new Action(null);
 
 var players, currentPlayer;
 
-/// Carry out the next padding turn.
+/// Carry out the next player turn.
 function turn() {
 	var action = players[currentPlayer].currentAction;
 	if (action) {
@@ -96,10 +106,19 @@ function turn() {
 	}
 
 	players[currentPlayer].offenseNext = false;
+	setTimeout(postTurn, postTurnTime);
+}
+
+function postTurn() {
+	_.each(players, function(c) {
+		c.animation = null;
+	});
 
 	++currentPlayer;
 	currentPlayer %= players.length;
 	players[currentPlayer].offenseNext = true;
+
+	redraw();
 }
 
 /// Players wants to attack.
@@ -152,10 +171,9 @@ function renderAll()  {
 }
 
 function renderCharacter(character) {
-	var stance = 'stand';
-	if (character.currentAction) {
-		stance = character.currentAction.name;
-	}
+	var stance = character.animation ||
+		(character.currentAction ? character.currentAction.name : null) || 
+		 'stand';
 
 	return h('div.character.' + (character.offenseNext ? 'off' : 'def'),
 			{style: {'text-align': character.dir}}, 
