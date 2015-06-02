@@ -5,10 +5,12 @@ var diff = require('virtual-dom/diff');
 var patch = require('virtual-dom/patch');
 var createElement = require('virtual-dom/create-element');
 
+var delegator = require('dom-delegator')();
+
 // 0: Tweakables
 
-var turnTime = 2000;
-var postTurnTime = 400;
+var turnTime = 1000;
+var postTurnTime = 300;
 
 
 // A: Data types and automatic behaviours
@@ -26,6 +28,7 @@ Character.prototype.dealDamage = function(type, amount) {
 	this.hp -= amount;
 	if (this.hp < 0) {
 		alert("" + this + " just died");
+		stopLoop();
 	}
 }
 
@@ -153,14 +156,15 @@ function turn() {
 
 	players[currentPlayer].offenseNext = false;
 	setTimeout(postTurn, postTurnTime);
+	players[currentPlayer].controller.acceptInput(true);
+
+	redraw();
 }
 
 function postTurn() {
 	_.each(players, function(c) {
 		c.animation = null;
 	});
-
-	players[currentPlayer].controller.acceptInput(true);
 
 	++currentPlayer;
 	currentPlayer %= players.length;
@@ -214,6 +218,20 @@ currentPlayer = 1;
 p2.offenseNext = true;
 human.acceptInput(true);
 
+var loopTimer = null;
+function startLoop() {
+	turnTime = Number(document.getElementById('turnTimeInput').value);
+	loopTimer = setInterval(turn, turnTime);
+}
+function stopLoop() {
+	clearTimeout(loopTimer);
+	loopTimer = null;
+}
+function toggleLoop() {
+	if (loopTimer) stopLoop();
+	else startLoop();
+}
+window.toggleLoop = toggleLoop; //TODO
 
 
 // 1: Create a function that declares what the DOM should look like
@@ -221,6 +239,8 @@ function renderAll()  {
 	return h('div', {}, [
 		h('div', {}, "Offensive Player: " + players[currentPlayer]),
 		h('div', {}, _.map(players, renderCharacter)),
+		h('input#turnTimeInput', {value: turnTime}),
+		h('button', {'ev-click': toggleLoop}, "Toggle Timed Loop"),
 	]);
 }
 
@@ -248,7 +268,7 @@ function renderDebug(e) {
 
 // 2: Initialise the document
 
-var tree = renderAll();          // We need an initial tree
+var tree = renderAll();                 // We need an initial tree
 var rootNode = createElement(tree);     // Create an initial root DOM node ...
 document.body.appendChild(rootNode);    // ... and it should be in the document
 
