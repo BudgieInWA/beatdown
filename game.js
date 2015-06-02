@@ -57,16 +57,20 @@ LocalAISimple.prototype.acceptInput = function (bool) {
 		// choose an action!
 		var r = Math.random();
 		if (r < 0.2) {
-			c.currentAction = new Attack(c, c.target);
+			action = new Attack(c, c.target);
 		} else if (r < 0.3) {
-			c.currentAction = new WaitAction(c);
+			action = c.currentAction;
 		} else {
 			if (c.target.currentAction.isAttack) {
-				c.currentAction = new Block(c);
+				action = new Block(c);
 			} else {
-				c.currentAction = new Attack(c, c.target);
+				action = new Attack(c, c.target);
 			}
 		}
+
+		setTimeout(function () {
+			c.currentAction = action
+		}, Math.random() * 0.8 * turnTime);
 	}
 }
 
@@ -249,7 +253,11 @@ function renderCharacter(character) {
 		character.currentAction.name || 
 		'stand';
 
-	return h('div.character.' + (character.offenseNext ? 'off' : 'def'),
+	var classes = ['character', (character.offenseNext ? 'off' : 'def')];
+	if (character.controller.acceptingInput) 
+		classes.push('active');
+
+	return h('div.' + classes.join('.'),
 			{style: {'text-align': character.dir}}, 
 			[
 		h('img', {src: 'sprites/mouse-' + character.dir + '-' + stance + '.png'}),

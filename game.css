@@ -7,10 +7,15 @@
 	width: 20em;
 	display: inline-block;
 	padding: 1em;
-	border: 0 solid lightblue;
-	border-top-width: 3px
+	border-top: 3px solid lightblue;
+	border-bottom: 3px solid white;
 }
 
 .character.off {
-	border-color: red;
+	border-top-color: red;
+}
+
+.character.active {
+	border-bottom-color: blue;
+	box-shadow: 0 0 30px 5px rgba(0, 0, 255, 0.2) inset
 }
