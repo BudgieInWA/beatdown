@@ -15,7 +15,7 @@ var postTurnTime = 400;
 function Character(name) {
 	this.name = name;
 	this.hp = 10;
-	this.currentAction = null;
+	this.currentAction = new WaitAction(this);
 	this.animation = null;
 	this.offenseNext = false;
 }
@@ -29,6 +29,44 @@ Character.prototype.dealDamage = function(type, amount) {
 	}
 }
 
+/**
+ * A human player with a keyboard.
+ */
+function LocalHuman(character) {
+	this.character = character;
+	this.character.controller = this;
+	this.acceptingInput = false;
+}
+LocalHuman.prototype.acceptInput = function (bool) {
+	this.acceptingInput = bool;
+}
+
+/**
+ * A simple AI player.
+ */
+function LocalAISimple(character) {
+	this.character = character;
+	this.character.controller = this;
+}
+LocalAISimple.prototype.acceptInput = function (bool) {
+	var c = this.character;
+	if (bool) {
+		// choose an action!
+		var r = Math.random();
+		if (r < 0.2) {
+			c.currentAction = new Attack(c, c.target);
+		} else if (r < 0.3) {
+			c.currentAction = new WaitAction(c);
+		} else {
+			if (c.target.currentAction.isAttack) {
+				c.currentAction = new Block(c);
+			} else {
+				c.currentAction = new Attack(c, c.target);
+			}
+		}
+	}
+}
+
 /// Something that a character can do on his turn.
 function Action(name, owner) {
 	this.name = name;
@@ -38,7 +76,7 @@ function Action(name, owner) {
 }
 Action.prototype.resolveOffense = function() {
 	console.log("Generic Action (offense)", this);
-	this.owner.currentAction = null; // default, we're done with this action
+	this.owner.currentAction = new WaitAction(this); // default, we're done with this action
 }
 Action.prototype.resolveDefense = function() {
 	console.log("Generic Action (defense)", this);
@@ -46,6 +84,12 @@ Action.prototype.resolveDefense = function() {
 Action.prototype.toString = function() {
 	return "[Action " + this.name + "]";
 }
+
+/// For doing nothing.
+function WaitAction(owner) {
+	Action.call(this, 'stand', owner);
+}
+WaitAction.prototype = new Action(null);
 
 /**
  * Attacking some target.
@@ -63,7 +107,7 @@ Attack.prototype.resolveOffense = function() {
 	console.log("Attack (offense)", this);
 
 	var blocked = false;
-	if (this.target.currentAction && this.target.currentAction.isBlock) {
+	if (this.target.currentAction.isBlock) {
 		var block = this.target.currentAction;
 		blocked = true;
 	}
@@ -75,7 +119,7 @@ Attack.prototype.resolveOffense = function() {
 
 	this.owner.animation = 'swing';
 
-	this.owner.currentAction = null; // done with this action
+	this.owner.currentAction = new WaitAction(this); // done with this action
 }
 
 /**
@@ -97,6 +141,8 @@ var players, currentPlayer;
 
 /// Carry out the next player turn.
 function turn() {
+	players[(currentPlayer+1) % 2].controller.acceptInput(false);
+
 	var action = players[currentPlayer].currentAction;
 	if (action) {
 		action.resolveOffense();
@@ -114,6 +160,8 @@ function postTurn() {
 		c.animation = null;
 	});
 
+	players[currentPlayer].controller.acceptInput(true);
+
 	++currentPlayer;
 	currentPlayer %= players.length;
 	players[currentPlayer].offenseNext = true;
@@ -123,17 +171,16 @@ function postTurn() {
 
 /// Players wants to attack.
 function playerAttack() {
-	var player = players[(currentPlayer+1) % players.length];
-	var target = players[currentPlayer];
+	if (!human.acceptingInput) return;
 
-	player.currentAction = new Attack(player, target);
+	human.character.currentAction = new Attack(human.character, human.character.target);
 }
 
 /// Players wants to block.
 function playerBlock() {
-	var player = players[(currentPlayer+1) % players.length];
+	if (!human.acceptingInput) return;
 
-	player.currentAction = new Block(player);
+	human.character.currentAction = new Block(human.character);
 }
 
 
@@ -157,9 +204,16 @@ var p1 = new Character("Alice");
 var p2 = new Character("Bob");
 p1.dir = 'right';
 p2.dir = 'left';
+p1.target = p2;
+p2.target = p1;
 players = [p1, p2];
-currentPlayer = 0;
-p1.offenseNext = true;
+var human = new LocalHuman(p1);
+var computer = new LocalAISimple(p2);
+
+currentPlayer = 1;
+p2.offenseNext = true;
+human.acceptInput(true);
+
 
 
 // 1: Create a function that declares what the DOM should look like
@@ -172,8 +226,8 @@ function renderAll()  {
 
 function renderCharacter(character) {
 	var stance = character.animation ||
-		(character.currentAction ? character.currentAction.name : null) || 
-		 'stand';
+		character.currentAction.name || 
+		'stand';
 
 	return h('div.character.' + (character.offenseNext ? 'off' : 'def'),
 			{style: {'text-align': character.dir}}, 
