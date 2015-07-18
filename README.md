@@ -22,6 +22,13 @@ Running
 
 Simply view game.html in a browser.
 
+Hacking
+-------
+
+Run `npm run watch` to automatically rebuild when you modify any js source files.
+
+Submit pull requests to [github.com/BudgieInWA/beatdown](https://github.com/BudgieInWA/beatdown).
+
 
 Gameplay
 --------
