@@ -1,6 +1,6 @@
-sprites/* 
-bundle.js 
+# Currently ignoring sprites because I don't own them.
+/sprites/*
+
 /bundle.js
 /non_git_resources/*
-/sprites/*
 /node_modules/*
