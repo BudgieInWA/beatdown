@@ -1,2 +1,6 @@
 sprites/* 
 bundle.js 
+/bundle.js
+/non_git_resources/*
+/sprites/*
+/node_modules/*
