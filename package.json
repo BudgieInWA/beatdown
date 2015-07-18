@@ -1,0 +1,16 @@
+{
+	"name": "beatdown",
+	"private": true,
+	"version": "0.0.0",
+	"devDependencies" : {
+		"browserify":		"11.x.x",
+		"watchify": 		"3.x.x",
+		"dom-delegator":	"13.x.x",
+		"underscore": 		"1.x.x",
+		"virtual-dom": 		"2.x.x"
+	},
+	"scripts" : {
+		"build": "browserify game.js --verbose --outfile=bundle.js",
+		"watch": "watchify game.js --verbose --outfile=bundle.js"
+	}
+}
