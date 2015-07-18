@@ -1,6 +1,8 @@
 Beatdown
 ========
 
+[![Floobits Status](https://floobits.com/BudgieInWA/beatdown.svg)](https://floobits.com/BudgieInWA/beatdown/redirect)
+
 A gameplay experiment blending the mechanics of a rhythm game with that of a fighting game.
 
 Set up
