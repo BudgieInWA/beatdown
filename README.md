@@ -3,6 +3,17 @@ Beatdown
 
 A gameplay experiment blending the mechanics of a rhythm game with that of a fighting game.
 
+Set up
+------
+
+node and npm are required to build.
+
+From the project directory:
+
+```sh
+npm install
+npm run build
+```
 
 Running
 -------
