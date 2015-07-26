@@ -5,7 +5,7 @@ var collisionX = 200;
 var collisionY = 200;
 
 /** Number of seconds per beat. */
-var beatDuration = 10.0;
+var beatDuration = 1.0;
 /** Length of a track beat in pixels. */
 var trackBeatLength = 80;
 /** {number} How many pixels the track moves per second. */
@@ -28,6 +28,11 @@ var Character = function(side) {
 	this.dirSign = side === 'left' ? 1 : -1;
 
 	this.trackOffset = 0;
+}
+
+/** Update the character for the end of a beat. */
+Character.prototype.beat = function() {
+	this.trackOffset -= this.dirSign * trackBeatLength;
 }
 
 /**

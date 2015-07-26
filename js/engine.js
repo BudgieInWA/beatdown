@@ -46,6 +46,11 @@ var Engine = (function(global) {
 
 		totalTime += dt;
 
+		if (nextBeatTime < now) {
+			beat();
+			nextBeatTime += beatDuration * 1000;
+		}
+
         /* Call our update/render functions, pass along the time delta to
          * our update function since it may be used for smooth animation.
          */
@@ -70,8 +75,20 @@ var Engine = (function(global) {
     function init() {
         reset();
         lastTime = Date.now();
+		nextBeatTime = lastTime + beatDuration * 1000;
         main();
     }
+
+
+	/**
+	 * Resolve the next beat.
+	 */
+	function beat() {
+		console.log("beat");
+		characters.forEach(function(c) {
+			c.beat();
+		});
+	}
 
     /* This function is called by main (our game loop) and itself calls all
      * of the functions which may need to update entity's data. Based on how
