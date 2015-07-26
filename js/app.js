@@ -58,8 +58,12 @@ Player.prototype.update = function(dt) {
  * @param {string} key - The name of the key.
  * @param {boolean} down - Is the event keydown or key up?
  */
-Player.prototype.handleInput = function(key, down) {
-	var sign = down ? 1 : -1;
+Player.prototype.handleInput = function(key, ev) {
+	var sign = null;
+	if (ev === 'down') sign = 1;
+	if (ev === 'up') sign = -1;
+	if (sign === null) return;
+
 	switch(key) {
 		case 'left':
 			this.dx -= this.speed * sign;
@@ -100,13 +104,21 @@ var allowedKeys = {
 	39: 'right',
 	40: 'down'
 };
+var pressedKeys = {};
+
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method.
 document.addEventListener('keydown', function(e) {
 	var k = allowedKeys[e.keyCode];
-    if (k) player.handleInput(k, true);
+	if (!k) return;
+
+    player.handleInput(k, pressedKeys[k] ? 'repeat' : 'down');
+	pressedKeys[k] = true;
 });
 document.addEventListener('keyup', function(e) {
 	var k = allowedKeys[e.keyCode];
-    if (k) player.handleInput(k, false);
+	if (!k) return;
+
+    player.handleInput(k, 'up');
+	pressedKeys[k] = false;
 });
