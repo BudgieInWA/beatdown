@@ -1,102 +1,112 @@
 "use strict";
 
-// Enemies our player must avoid
-var Enemy = function(x, y, dx, dy) {
-    // Variables applied to each of our instances go here,
-    // we've provided one for you to get started
+/** Where the two tracks collide. */
+var collisionX = 200;
+var collisionY = 200;
 
-    // The image/sprite for our enemies, this uses
-    // a helper we've provided to easily load images
-    this.sprite = 'images/enemy-bug.png';
+/** Number of seconds per beat. */
+var beatDuration = 10.0;
+/** Length of a track beat in pixels. */
+var trackBeatLength = 80;
+/** {number} How many pixels the track moves per second. */
+var trackSpeed = trackBeatLength / beatDuration;
 
-	this.x = x;
-	this.y = y;
-	this.dx = dx || 0;
-	this.dy = dy || 0;
+
+/**
+ * @constructor
+ *
+ * A character that fights.
+ *
+ * @param {string} side - 'left' or 'right'.
+ */
+var Character = function(side) {
+    this.sprite = 'images/char-boy.png';
+
+	this.side = side;
+
+	/** The direction that this character's track goes. */
+	this.dirSign = side === 'left' ? 1 : -1;
+
+	this.trackOffset = 0;
 }
 
-// Update the enemy's position, required method for game
-// Parameter: dt, a time delta between ticks
-Enemy.prototype.update = function(dt) {
-    // You should multiply any movement by the dt parameter
-    // which will ensure the game runs at the same speed for
-    // all computers.
-	this.x += this.dx * dt;
-	this.y += this.dy * dt;
+/**
+ * Update the character for a new frame.
+ *
+ * @param {number} dt - The number of seconds that has passed since the last update.
+ */
+Character.prototype.update = function(dt) {
+	this.trackOffset += this.dirSign * trackSpeed * dt;
 }
 
-// Draw the enemy on the screen, required method for game
-Enemy.prototype.render = function() {
-    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+function drawTick(x, y) {
+	ctx.beginPath();
+	ctx.moveTo(x, y-10);
+	ctx.lineTo(x, y+10);
+	ctx.stroke();
 }
 
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
-var Player = function(x, y) {
+/**
+ * Draw the character and their track on the screen.
+ */
+Character.prototype.render = function() {
+    //ctx.drawImage(Resources.get('images/char-cat-girl.png'), collisionX, collisionY);
 
-    this.sprite = 'images/char-cat-girl.png';
+	var numBeats = 5;
+	var s = this.dirSign;
 
-	this.speed = 10;
-	this.x = x;
-	this.y = y;
-	this.dx = 0;
-	this.dy = 0;
+	ctx.lineWidth = 4;
+	ctx.strokeStyle = this.side === 'left' ? 'blue' : 'green';
+
+	// Draw track body.
+	ctx.beginPath();
+	ctx.moveTo(collisionX, collisionY);
+	ctx.lineTo(collisionX - s * numBeats * trackBeatLength + s * this.trackOffset, collisionY);
+	ctx.stroke();
+
+	// Draw ticks and actions.
+	var i;
+	for (i = 0; i < numBeats; i++) {
+		drawTick(collisionX - s * trackBeatLength * (i+1) + this.trackOffset, collisionY);
+		//TODO draw action.
+	}
 }
 
-// Render the player to the screen.
-Player.prototype.render = function() {
-	ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-};
-
-Player.prototype.update = function(dt) {
-	this.x += this.dx * dt;
-	this.y += this.dy * dt;
-};
+/**
+ * A person who plays the game, controlling a character.
+ *
+ * @param {Character} character - The character that the player is controlling.
+ */
+var Player = function(character) {
+	this.character = character;
+}
 
 /** 
  * @param {string} key - The name of the key.
  * @param {boolean} down - Is the event keydown or key up?
  */
 Player.prototype.handleInput = function(key, ev) {
-	var sign = null;
-	if (ev === 'down') sign = 1;
-	if (ev === 'up') sign = -1;
-	if (sign === null) return;
-
-	switch(key) {
-		case 'left':
-			this.dx -= this.speed * sign;
-		break;
-		case 'right':
-			this.dx += this.speed * sign;
-		break;
-		case 'up':
-			this.dy -= this.speed * sign;
-		break;
-		case 'down':
-			this.dy += this.speed * sign;
-		break;
+	if (ev == 'down') {
+		switch(key) {
+			//TODO
+		}
 	}
 };
 
 
 // Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
 
-var allEnemies = [];
-var player = null;
+var player, opponent, characters;
 
 var initLevel = function() {
-	player = new Player(190, 198);
+	var leftChar = new Character('left');
+	var rightChar = new Character('right');
+	characters = [leftChar, rightChar];
 
-	var i;
-	for (i = 0; i < 4; i++) {
-		var sign = (i % 2 == 0) ? 1 : -1;
-		allEnemies.push(new Enemy(190 + sign*190, i * 30, -sign*10, 0));
-	}
+	player = new Player(leftChar);
+	opponent = new Player(rightChar);
 };
+
 
 var allowedKeys = {
 	37: 'left',
