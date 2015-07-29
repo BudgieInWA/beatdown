@@ -1,8 +1,8 @@
 "use strict";
 
 /** Where the two tracks collide. */
-var collisionX = 200;
-var collisionY = 200;
+var collisionX = 250;
+var collisionY = 230;
 
 /** Number of seconds per beat. */
 var beatDuration = 1.0;
@@ -18,9 +18,12 @@ var trackSpeed = trackBeatLength / beatDuration;
  * A character that fights.
  *
  * @param {string} side - 'left' or 'right'.
+ * @param {string} characterType - the character type. eg. 'char-boy' or 'char-cat-girl'
  */
-var Character = function(side) {
-    this.sprite = 'images/char-boy.png';
+var Character = function(side, characterType) {
+
+	/* At the moment only used for sprite selection */
+	this.characterType = characterType;
 
 	this.side = side;
 
@@ -55,7 +58,17 @@ function drawTick(x, y) {
  * Draw the character and their track on the screen.
  */
 Character.prototype.render = function() {
-    //ctx.drawImage(Resources.get('images/char-cat-girl.png'), collisionX, collisionY);
+
+	// Select the relevant sprite and draw the player above the beat bar.
+	this.sprite = 'images/' + this.characterType + '.png';
+	// TODO select sprite based on player action
+	var playerImage = Resources.get(this.sprite);
+	if (playerImage) {
+		var xOffset = (this.side === 'left' ? -1 : 1) * 100;
+		var xPos = collisionX + xOffset - playerImage.width / 2;
+		var yPos = collisionY - 20 - playerImage.height;
+		ctx.drawImage(playerImage, xPos, yPos);
+	}
 
 	var numBeats = 5;
 	var s = this.dirSign;
@@ -104,8 +117,8 @@ Player.prototype.handleInput = function(key, ev) {
 var player, opponent, characters;
 
 var initLevel = function() {
-	var leftChar = new Character('left');
-	var rightChar = new Character('right');
+	var leftChar = new Character('left', 'char-boy');
+	var rightChar = new Character('right', 'char-cat-girl');
 	characters = [leftChar, rightChar];
 
 	player = new Player(leftChar);
