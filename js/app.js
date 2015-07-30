@@ -30,12 +30,23 @@ var Character = function(side, characterType) {
 	/** The direction that this character's track goes. */
 	this.dirSign = side === 'left' ? 1 : -1;
 
+	/** How far the track has moved since the last beat. */
 	this.trackOffset = 0;
+
+	/** 
+	 * The list of upcoming stances. The first stance is the one that dictates what different input
+	 * does.
+	 */
+	this.futureStances = [];
 }
 
 /** Update the character for the end of a beat. */
 Character.prototype.beat = function() {
 	this.trackOffset -= this.dirSign * trackBeatLength;
+
+	var oldStance = this.futureStances.shift();
+	//DEBUG throw it on the end so we can see it rendered again
+	if (oldStance) this.futureStances.push(oldStance);
 }
 
 /**
@@ -85,10 +96,196 @@ Character.prototype.render = function() {
 	// Draw ticks and actions.
 	var i;
 	for (i = 0; i < numBeats; i++) {
-		drawTick(collisionX - s * trackBeatLength * (i+1) + this.trackOffset, collisionY);
-		//TODO draw action.
+		var x = collisionX - s * trackBeatLength * (i+1) + this.trackOffset;
+		var y = collisionY;
+
+		drawTick(x, y);
+		if (i < this.futureStances.length) {
+			this.futureStances[i].render(x, y);
+		}
 	}
 }
+
+
+/**
+ * Describes (a bunch about) the state that a Character is in or will probably be in in the future.
+ *
+ * Determines what actions are possible (and what the resulting next Stances will be).
+ *
+ * Can render itself on a track in a way that describes what inputs are valid and what they do.
+ *
+ * @param {Character} character - The character that the Stance describes.
+ */
+var Stance = function(character) {
+	this.character = character;
+	this.name = "abstract";
+}
+Stance.prototype.toString = function() {
+	return "Stance " + name;
+}
+
+/**
+ * Render the stance and the actions that it provides to the track.
+ *
+ * @param {number} x - The x coord of the place to render.
+ * @param {number} y - The y coord of the place to render.
+ */
+Stance.prototype.render = function(x, y) {
+	/*
+	// Draw the stance.
+    ctx.drawImage(Resources.get('images/track-stance-'+this.name+'.png'), x, y);
+
+	var offset = trackBeatLength / 3;
+	// Draw the four options for the four directions.
+    ctx.drawImage(Resources.get('images/track-'+this.spriteUp+'.png'), x, y - offset);
+    ctx.drawImage(Resources.get('images/track-'+this.spriteDown+'.png'), x, y + offset);
+    ctx.drawImage(Resources.get('images/track-'+this.spriteLeft+'.png'), x - offset, y);
+    ctx.drawImage(Resources.get('images/track-'+this.spriteRight+'.png'), x + offset, y);
+	*/
+
+	// Draw the stance.
+    ctx.fillText('stance-'+this.name, x, y);
+
+	var offset = trackBeatLength / 3;
+	// Draw the four options for the four directions.
+    ctx.fillText(this.upSprite, x, y - offset);
+    ctx.fillText(this.downSprite, x, y + offset);
+    ctx.fillText(this.leftSprite, x - offset, y);
+    ctx.fillText(this.rightSprite, x + offset, y);
+}
+
+
+/** This is a placeholder for a stance choosing the next stance upon resolving. */
+var emitNextStance = function() { /* TODO */ }
+/** This is a placeholder for a stance choosing an action. */
+var emitAction = function() { /* TODO */ }
+
+Stance.prototype.upSprite = 'stance-stumble';
+/** Do something for "up". */
+Stance.prototype.doUp = function() {
+	emitNextStance(new StumbleStance(this.character));
+}
+
+Stance.prototype.downSprite = 'stance-stumble';
+/** Do something for "down". */
+Stance.prototype.doDown = function() {
+	emitNextStance(new StumbleStance(this.character));
+}
+
+Stance.prototype.leftSprite = 'stance-stumble';
+/** Do something for "left". */
+Stance.prototype.doLeft = function() {
+	emitNextStance(new StumbleStance(this.character));
+}
+
+Stance.prototype.rightSprite = 'stance-stumble';
+/** Do something for "right". */
+Stance.prototype.doRight = function() {
+	emitNextStance(new StumbleStance(this.character));
+}
+	
+
+/**
+ * The Character is stumbling, cos they dun goofed.
+ */
+var StumbleStance = function(character) {
+	Stance.call(this, character);
+	this.name = 'stumble';
+}
+StumbleStance.prototype = new Stance(null);
+
+StumbleStance.prototype.upSprite = 'stance-high';
+StumbleStance.prototype.doUp = function() {
+	emitNextStance(new HighStance(this.character));
+}
+StumbleStance.prototype.downSprite = 'stance-low';
+StumbleStance.prototype.doUp = function() {
+	emitNextStance(new LowStance(this.character));
+}
+
+
+/**
+ * The Character is threatening high.
+ */
+var HighStance = function(character) {
+	Stance.call(this, character);
+	this.name = "high";
+}
+HighStance.prototype = new Stance(null);
+
+HighStance.prototype.downSprite = 'stance-low';
+HighStance.prototype.doDown = function() {
+	emitNextStance(new LowStance(this.character));
+}
+
+HighStance.prototype.rightSprite = 'action-attack-high';
+HighStance.prototype.doRight = function() {
+	emitNextStance(new HighStance(this.character));
+	var a = new Action(this.character);
+	a.attack.high.power = 1;
+	a.attack.high.range = 1;
+	emitAction(a);
+}
+
+
+/**
+ * The Character is threatening Low.
+ */
+var LowStance = function(character) {
+	Stance.call(this, character);
+	this.name = "low";
+}
+LowStance.prototype = new Stance(null);
+
+LowStance.prototype.upSprite = 'stance-high';
+LowStance.prototype.doUp = function() {
+	emitNextStance(new HighStance(this.character));
+}
+
+LowStance.prototype.rightSprite = 'action-attack-low';
+LowStance.prototype.doRight = function() {
+	emitNextStance(new LowStance(this.character));
+	var a = new Action(this.character);
+	a.attack.low.power = 1;
+	a.attack.low.range = 1;
+	emitAction(a);
+}
+
+
+/**
+ * Completely describes what a character does on a beat.
+ *
+ * @param {Character} character - The character is performing the action.
+ */
+var Action = function(character) {
+	this.character = character;
+
+	this.attacks = {
+		high: {
+			power: -1,
+			range: -1,
+		},
+		low: {
+			power: -1,
+			range: -1,
+		}
+	}
+	this.blocks = {
+		high: {
+			power: -1,
+		},
+		low: {
+			power: -1,
+		}
+	}
+
+	//this.onBlock = ...
+	//this.onAttack = ...
+	//this.onNoDamage = ...
+}
+
+
+
 
 /**
  * A person who plays the game, controlling a character.
@@ -112,6 +309,40 @@ Player.prototype.handleInput = function(key, ev) {
 };
 
 
+/**
+ * takes an attack action and a block action and determines if 
+ */
+var resolveAttack = function(attackAction, blockAction, height) {
+	var attackChar = attackAction.character;
+	var attack     = attackAction.attack[height];
+	var blockChar  = blockAction.character;
+	var block      = blockAction.block[height];
+
+	//TODO if (attackChar.offset + blockChar.offset <= attack.range)
+	if (attack.power >= 0) {
+		var diff = attack.power > block.power;
+		if (diff > 0) {
+			blockChar.takeDamage(diff);
+			//attackAction.onAttack(...)
+		} else {
+			//blockAction.onBlock(...)
+		}
+	}
+
+	//TODO? maybe choose new stances.
+}
+/**
+ * Takes the actions that two characters make and resolves them.
+ */
+var resolveActions = function(leftAction, rightAction) {
+	['low', 'high'].forEach(function(h) {
+		resolveAttack(leftAction, rightAction, h);
+		resolveAttack(rightAction, leftAction, h);
+	});
+};
+	
+
+
 // Now instantiate your objects.
 
 var player, opponent, characters;
@@ -123,6 +354,13 @@ var initLevel = function() {
 
 	player = new Player(leftChar);
 	opponent = new Player(rightChar);
+
+	//DEBUG
+	leftChar.futureStances = [
+		new HighStance(leftChar),
+		new LowStance(leftChar),
+		new StumbleStance(leftChar),
+	];
 };
 
 

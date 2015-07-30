@@ -85,6 +85,7 @@ var Engine = (function(global) {
 	 */
 	function beat() {
 		console.log("beat");
+		//TODO resolveActions(left and right chars)
 		characters.forEach(function(c) {
 			c.beat();
 		});
