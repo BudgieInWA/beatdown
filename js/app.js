@@ -58,20 +58,20 @@ function drawTick(x, y) {
  * Draw the character and their track on the screen.
  */
 Character.prototype.render = function() {
+	var s = this.dirSign;
 
 	// Select the relevant sprite and draw the player above the beat bar.
-	this.sprite = 'images/' + this.characterType + '.png';
+	var sprite = 'images/' + this.characterType + '.png';
 	// TODO select sprite based on player action
-	var playerImage = Resources.get(this.sprite);
+	var playerImage = Resources.get(sprite);
 	if (playerImage) {
-		var xOffset = (this.side === 'left' ? -1 : 1) * 100;
+		var xOffset = -s * 100;
 		var xPos = collisionX + xOffset - playerImage.width / 2;
 		var yPos = collisionY - 20 - playerImage.height;
 		ctx.drawImage(playerImage, xPos, yPos);
 	}
 
 	var numBeats = 5;
-	var s = this.dirSign;
 
 	ctx.lineWidth = 4;
 	ctx.strokeStyle = this.side === 'left' ? 'blue' : 'green';
