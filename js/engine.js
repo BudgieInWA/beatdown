@@ -128,12 +128,9 @@ var Engine = (function(global) {
          * for that particular row of the game level.
          */
         var rowImages = [
-                'images/water-block.png',   // Top row is water
-                'images/stone-block.png',   // Row 1 of 3 of stone
-                'images/stone-block.png',   // Row 2 of 3 of stone
-                'images/stone-block.png',   // Row 3 of 3 of stone
-                'images/grass-block.png',   // Row 1 of 2 of grass
-                'images/grass-block.png'    // Row 2 of 2 of grass
+                null,                       // 'images/water-block.png'
+                'images/stone-block.png',   // Row 2 is stone
+                null, null, null,           // 'images/grass-block.png'
             ],
             numRows = 6,
             numCols = 5,
@@ -152,7 +149,14 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-                ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
+		var rowImage = Resources.get(rowImages[row]);
+		/* Some rows do not have any groupd sprites */
+		// TODO we are not clearning the canvas in between renders,
+		// we might want some white ground to cover characters from
+		// the past up.
+		if (rowImage) {
+                ctx.drawImage(rowImage, col * 101, row * 83);
+		}
             }
         }
 
@@ -194,7 +198,8 @@ var Engine = (function(global) {
         'images/water-block.png',
         'images/grass-block.png',
         'images/enemy-bug.png',
-        'images/char-cat-girl.png'
+        'images/char-cat-girl.png',
+	'images/char-boy.png',
     ]);
     Resources.onReady(init);
 
