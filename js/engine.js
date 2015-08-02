@@ -27,7 +27,7 @@ var Engine = (function(global) {
 		totalTime = 0;
 
 
-    canvas.width = 505;
+    canvas.width = 1010;
     canvas.height = 606;
     doc.body.appendChild(canvas);
 
@@ -137,7 +137,7 @@ var Engine = (function(global) {
                 null, null, null,           // 'images/grass-block.png'
             ],
             numRows = 6,
-            numCols = 5,
+            numCols = 10,
             row, col;
 
         /* Loop through the number of rows and columns we've defined above
@@ -153,14 +153,11 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-		var rowImage = Resources.get(rowImages[row]);
-		/* Some rows do not have any groupd sprites */
-		// TODO we are not clearning the canvas in between renders,
-		// we might want some white ground to cover characters from
-		// the past up.
-		if (rowImage) {
-                ctx.drawImage(rowImage, col * 101, row * 83);
-		}
+				var rowImage = Resources.get(rowImages[row]);
+				/* Some rows do not have any groupd sprites */
+				if (rowImage) {
+					ctx.drawImage(rowImage, col * 101, row * 83);
+				}
             }
         }
 

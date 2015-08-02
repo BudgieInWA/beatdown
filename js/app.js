@@ -1,13 +1,13 @@
 "use strict";
 
 /** Where the two tracks collide. */
-var collisionX = 250;
+var collisionX = 505;
 var collisionY = 230;
 
 /** Number of seconds per beat. */
-var beatDuration = 1.0;
+var beatDuration = 0.8;
 /** Length of a track beat in pixels. */
-var trackBeatLength = 80;
+var trackBeatLength = 140;
 /** {number} How many pixels the track moves per second. */
 var trackSpeed = trackBeatLength / beatDuration;
 
