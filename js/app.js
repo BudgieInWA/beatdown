@@ -137,53 +137,46 @@ Stance.prototype.render = function(x, y) {
 
 	var offset = trackBeatLength / 3;
 	// Draw the four options for the four directions.
-    ctx.drawImage(Resources.get('images/track-'+this.spriteUp+'.png'), x, y - offset);
-    ctx.drawImage(Resources.get('images/track-'+this.spriteDown+'.png'), x, y + offset);
-    ctx.drawImage(Resources.get('images/track-'+this.spriteLeft+'.png'), x - offset, y);
-    ctx.drawImage(Resources.get('images/track-'+this.spriteRight+'.png'), x + offset, y);
+    ctx.drawImage(Resources.get('images/track-'+this.up.icon+'.png'), x, y - offset);
+    ctx.drawImage(Resources.get('images/track-'+this.down.icon+'.png'), x, y + offset);
+    ctx.drawImage(Resources.get('images/track-'+this.left.icon+'.png'), x - offset, y);
+    ctx.drawImage(Resources.get('images/track-'+this.right.icon+'.png'), x + offset, y);
 	*/
 
-	// Draw the stance.
+	ctx.textAlign = 'center';
+
+	// Draw the stance icon.
     ctx.fillText('stance-'+this.name, x, y);
 
 	var offset = trackBeatLength / 3;
 	// Draw the four options for the four directions.
-    ctx.fillText(this.upSprite, x, y - offset);
-    ctx.fillText(this.downSprite, x, y + offset);
-    ctx.fillText(this.leftSprite, x - offset, y);
-    ctx.fillText(this.rightSprite, x + offset, y);
+    ctx.fillText(this.up.icon,    x, y - offset);
+    ctx.fillText(this.down.icon,  x, y + offset);
+    ctx.fillText(this.left.icon,  x - offset, y);
+    ctx.fillText(this.right.icon, x + offset, y);
 }
 
 
-/** This is a placeholder for a stance choosing the next stance upon resolving. */
-var emitNextStance = function() { /* TODO */ }
-/** This is a placeholder for a stance choosing an action. */
-var emitAction = function() { /* TODO */ }
-
-Stance.prototype.upSprite = 'stance-stumble';
-/** Do something for "up". */
-Stance.prototype.doUp = function() {
-	emitNextStance(new StumbleStance(this.character));
+/**
+ * The basic 'stumble' move.
+ *
+ * This should be immutable.
+ */
+var stumbleMove = {
+	icon: 'stance-stumble',
+	result: function() {
+		return {
+			stances: [new StumbleStance(this.character)],
+			action: null,
+		}
+	},
 }
 
-Stance.prototype.downSprite = 'stance-stumble';
-/** Do something for "down". */
-Stance.prototype.doDown = function() {
-	emitNextStance(new StumbleStance(this.character));
-}
+Stance.prototype.up    = stumbleMove;
+Stance.prototype.down  = stumbleMove;
+Stance.prototype.left  = stumbleMove;
+Stance.prototype.right = stumbleMove;
 
-Stance.prototype.leftSprite = 'stance-stumble';
-/** Do something for "left". */
-Stance.prototype.doLeft = function() {
-	emitNextStance(new StumbleStance(this.character));
-}
-
-Stance.prototype.rightSprite = 'stance-stumble';
-/** Do something for "right". */
-Stance.prototype.doRight = function() {
-	emitNextStance(new StumbleStance(this.character));
-}
-	
 
 /**
  * The Character is stumbling, cos they dun goofed.
@@ -194,13 +187,23 @@ var StumbleStance = function(character) {
 }
 StumbleStance.prototype = new Stance(null);
 
-StumbleStance.prototype.upSprite = 'stance-high';
-StumbleStance.prototype.doUp = function() {
-	emitNextStance(new HighStance(this.character));
+StumbleStance.prototype.up = {
+	icon: 'stance-high',
+	result: function() {
+		return {
+			stances: [new HighStance(this.character)],
+			action: null,
+		}
+	},
 }
-StumbleStance.prototype.downSprite = 'stance-low';
-StumbleStance.prototype.doUp = function() {
-	emitNextStance(new LowStance(this.character));
+StumbleStance.prototype.down = {
+	icon: 'stance-low',
+	result: function() {
+		return {
+			stances: [new LowStance(this.character)],
+			action: null,
+		}
+	},
 }
 
 
@@ -213,18 +216,28 @@ var HighStance = function(character) {
 }
 HighStance.prototype = new Stance(null);
 
-HighStance.prototype.downSprite = 'stance-low';
-HighStance.prototype.doDown = function() {
-	emitNextStance(new LowStance(this.character));
+StumbleStance.prototype.down = {
+	icon: 'stance-low',
+	result: function() {
+		return {
+			stances: [new LowStance(this.character)],
+			action: null,
+		}
+	},
 }
 
-HighStance.prototype.rightSprite = 'action-attack-high';
-HighStance.prototype.doRight = function() {
-	emitNextStance(new HighStance(this.character));
-	var a = new Action(this.character);
-	a.attack.high.power = 1;
-	a.attack.high.range = 1;
-	emitAction(a);
+/** The 'attack' move. */
+StumbleStance.prototype.right = {
+	icon: 'action-attack-high',
+	result: function() {
+		var a = new Action(this.character);
+		a.attack.high.power = 1;
+		a.attack.high.range = 1;
+		return {
+			stances: [new HighStance(this.character)],
+			action: a,
+		}
+	},
 }
 
 
@@ -237,18 +250,28 @@ var LowStance = function(character) {
 }
 LowStance.prototype = new Stance(null);
 
-LowStance.prototype.upSprite = 'stance-high';
-LowStance.prototype.doUp = function() {
-	emitNextStance(new HighStance(this.character));
+StumbleStance.prototype.up = {
+	icon: 'stance-high',
+	result: function() {
+		return {
+			stances: [new HighStance(this.character)],
+			action: null,
+		}
+	},
 }
 
-LowStance.prototype.rightSprite = 'action-attack-low';
-LowStance.prototype.doRight = function() {
-	emitNextStance(new LowStance(this.character));
-	var a = new Action(this.character);
-	a.attack.low.power = 1;
-	a.attack.low.range = 1;
-	emitAction(a);
+/** The 'attack' move. */
+StumbleStance.prototype.right = {
+	icon: 'action-attack-low',
+	result: function() {
+		var a = new Action(this.character);
+		a.attack.low.power = 1;
+		a.attack.low.range = 1;
+		return {
+			stances: [new LowStance(this.character)],
+			action: a,
+		}
+	},
 }
 
 

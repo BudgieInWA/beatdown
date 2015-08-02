@@ -162,9 +162,8 @@ var Engine = (function(global) {
         }
 
 		ctx.clearRect(0, 0, 200, 20);
-		ctx.strokeStyle = 'black';
-		ctx.lineWidth = .3;
-		ctx.strokeText(totalTime, 0, 10);
+		ctx.textAlign = 'start';
+		ctx.fillText(totalTime.toFixed(2), 0, 10);
 
         renderEntities();
     }
