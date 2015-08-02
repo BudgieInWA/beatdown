@@ -33,6 +33,8 @@ var Character = function(side, characterType) {
 	/** How far the track has moved since the last beat. */
 	this.trackOffset = 0;
 
+	this.hp = 3;
+
 	/** 
 	 * The list of upcoming stances. The first stance is the one that dictates what different input
 	 * does.
@@ -40,13 +42,11 @@ var Character = function(side, characterType) {
 	this.futureStances = [];
 }
 
-/** Update the character for the end of a beat. */
-Character.prototype.beat = function() {
-	this.trackOffset -= this.dirSign * trackBeatLength;
-
-	var oldStance = this.futureStances.shift();
-	//DEBUG throw it on the end so we can see it rendered again
-	if (oldStance) this.futureStances.push(oldStance);
+Character.prototype.getCurrentStance = function() {
+	return this.futureStances[0];
+}
+Character.prototype.getAction = function() {
+	return this.nextAction || new Action(this);
 }
 
 /**
@@ -105,6 +105,46 @@ Character.prototype.render = function() {
 		}
 	}
 }
+
+/** Update the character for taking damage. */
+Character.prototype.takeDamage = function(amount) {
+	this.hp -= amount;
+}
+
+
+/**
+ * Handle a keypress.
+ *
+ * The player's current stance is inspected to determine what should happen, then the future
+ * stances and actions are set depending on that.
+ *
+ * @param {object} move - The move, as described by stances.
+ */
+Character.prototype.handleMove = function(move) {
+	if (this.hadInputThisBeat) {
+		//TODO stumble
+	} else {
+		this.futureStances = this.futureStances.slice(0, 1).concat(move.stances);
+		this.nextAction = move.action;
+	}
+}
+
+/**
+ * Update the character for the end of a beat.
+ *
+ * This is mostly cleanup / resetting.
+ */
+Character.prototype.beat = function() {
+	this.trackOffset -= this.dirSign * trackBeatLength;
+
+	this.futureStances.shift();
+	if (this.futureStances.length === 0) {
+		this.futureStances.push(new StumbleStance(this));
+	}
+
+	this.nextAction = null;
+}
+
 
 
 /**
@@ -231,8 +271,8 @@ StumbleStance.prototype.right = {
 	icon: 'action-attack-high',
 	result: function() {
 		var a = new Action(this.character);
-		a.attack.high.power = 1;
-		a.attack.high.range = 1;
+		a.attacks.high.power = 1;
+		a.attacks.high.range = 1;
 		return {
 			stances: [new HighStance(this.character)],
 			action: a,
@@ -265,8 +305,8 @@ StumbleStance.prototype.right = {
 	icon: 'action-attack-low',
 	result: function() {
 		var a = new Action(this.character);
-		a.attack.low.power = 1;
-		a.attack.low.range = 1;
+		a.attacks.low.power = 1;
+		a.attacks.low.range = 1;
 		return {
 			stances: [new LowStance(this.character)],
 			action: a,
@@ -307,6 +347,27 @@ var Action = function(character) {
 	//this.onNoDamage = ...
 }
 
+Action.prototype.toString = function() {
+	var bits = ["object Action"];
+	
+	if (this.attacks.high.power >= 0) {
+		bits.push("high attack " + this.attacks.high.power + "x" + this.attacks.high.range);
+	}
+	if (this.attacks.low.power >= 0) {
+		bits.push("low attack " + this.attacks.low.power + "x" + this.attacks.low.range);
+	}
+	if (this.blocks.high.power >= 0) {
+		bits.push("high block " + this.blocks.low.power);
+	}
+	if (this.blocks.low.power >= 0) {
+		bits.push("low block " + this.blocks.low.power);
+	}
+
+	return "[" + bits.join(", ") + "]";
+}
+
+
+
 
 
 
@@ -321,12 +382,19 @@ var Player = function(character) {
 
 /** 
  * @param {string} key - The name of the key.
- * @param {boolean} down - Is the event keydown or key up?
+ * @param {string} ev - The type of event: 'down', 'repeat', or 'up'.
  */
 Player.prototype.handleInput = function(key, ev) {
 	if (ev == 'down') {
 		switch(key) {
-			//TODO
+			case 'up':
+			case 'down':
+			case 'right':
+			case 'left':
+				var stance = this.character.getCurrentStance(); 
+				var result = stance[key].result();
+				this.character.handleMove(result);
+			break;
 		}
 	}
 };
@@ -337,9 +405,9 @@ Player.prototype.handleInput = function(key, ev) {
  */
 var resolveAttack = function(attackAction, blockAction, height) {
 	var attackChar = attackAction.character;
-	var attack     = attackAction.attack[height];
+	var attack     = attackAction.attacks[height];
 	var blockChar  = blockAction.character;
-	var block      = blockAction.block[height];
+	var block      = blockAction.blocks[height];
 
 	//TODO if (attackChar.offset + blockChar.offset <= attack.range)
 	if (attack.power >= 0) {
@@ -358,6 +426,11 @@ var resolveAttack = function(attackAction, blockAction, height) {
  * Takes the actions that two characters make and resolves them.
  */
 var resolveActions = function(leftAction, rightAction) {
+	leftAction  = leftAction;
+	rightAction = rightAction;
+
+	console.log("" + leftAction + " vs " + rightAction);
+
 	['low', 'high'].forEach(function(h) {
 		resolveAttack(leftAction, rightAction, h);
 		resolveAttack(rightAction, leftAction, h);
@@ -368,11 +441,11 @@ var resolveActions = function(leftAction, rightAction) {
 
 // Now instantiate your objects.
 
-var player, opponent, characters;
+var player, opponent, characters, leftChar, rightChar;
 
 var initLevel = function() {
-	var leftChar = new Character('left', 'char-boy');
-	var rightChar = new Character('right', 'char-cat-girl');
+	leftChar = new Character('left', 'char-boy');
+	rightChar = new Character('right', 'char-cat-girl');
 	characters = [leftChar, rightChar];
 
 	player = new Player(leftChar);
