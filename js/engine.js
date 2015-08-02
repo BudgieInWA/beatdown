@@ -27,7 +27,7 @@ var Engine = (function(global) {
 		totalTime = 0;
 
 
-    canvas.width = 505;
+    canvas.width = 1010;
     canvas.height = 606;
     doc.body.appendChild(canvas);
 
@@ -85,6 +85,7 @@ var Engine = (function(global) {
 	 */
 	function beat() {
 		console.log("beat");
+		resolveActions(leftChar.getAction(), rightChar.getAction());
 		characters.forEach(function(c) {
 			c.beat();
 		});
@@ -124,6 +125,9 @@ var Engine = (function(global) {
      * they are just drawing the entire screen over and over.
      */
     function render() {
+        /* clear the canvas before redrawing. */
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         /* This array holds the relative URL to the image used
          * for that particular row of the game level.
          */
@@ -133,7 +137,7 @@ var Engine = (function(global) {
                 null, null, null,           // 'images/grass-block.png'
             ],
             numRows = 6,
-            numCols = 5,
+            numCols = 10,
             row, col;
 
         /* Loop through the number of rows and columns we've defined above
@@ -149,21 +153,17 @@ var Engine = (function(global) {
                  * so that we get the benefits of caching these images, since
                  * we're using them over and over.
                  */
-		var rowImage = Resources.get(rowImages[row]);
-		/* Some rows do not have any groupd sprites */
-		// TODO we are not clearning the canvas in between renders,
-		// we might want some white ground to cover characters from
-		// the past up.
-		if (rowImage) {
-                ctx.drawImage(rowImage, col * 101, row * 83);
-		}
+				var rowImage = Resources.get(rowImages[row]);
+				/* Some rows do not have any groupd sprites */
+				if (rowImage) {
+					ctx.drawImage(rowImage, col * 101, row * 83);
+				}
             }
         }
 
 		ctx.clearRect(0, 0, 200, 20);
-		ctx.strokeStyle = 'black';
-		ctx.lineWidth = .3;
-		ctx.strokeText(totalTime, 0, 10);
+		ctx.textAlign = 'start';
+		ctx.fillText(totalTime.toFixed(2), 0, 10);
 
         renderEntities();
     }
