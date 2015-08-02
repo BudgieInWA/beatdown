@@ -225,7 +225,7 @@ var StumbleStance = function(character) {
 	Stance.call(this, character);
 	this.name = 'stumble';
 }
-StumbleStance.prototype = new Stance(null);
+StumbleStance.prototype = Object.create(Stance.prototype);
 
 StumbleStance.prototype.up = {
 	icon: 'stance-high',
@@ -254,7 +254,7 @@ var HighStance = function(character) {
 	Stance.call(this, character);
 	this.name = "high";
 }
-HighStance.prototype = new Stance(null);
+HighStance.prototype = Object.create(Stance.prototype);
 
 StumbleStance.prototype.down = {
 	icon: 'stance-low',
